@@ -494,9 +494,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
       currentVideo.loop = false;
       currentVideo.load();
 
-      const handleCurrentReady = () => {
-        readyCleanupRef.current = null;
-        currentVideo.removeEventListener("loadeddata", handleCurrentReady);
+      const activateVideo = () => {
         setLayerReady(layer, true);
         applyQueuedSeek(currentVideo);
         const playPromise = currentVideo.play();
@@ -504,12 +502,26 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
         setIsPlaying(true);
       };
 
+      const handleCurrentReady = () => {
+        readyCleanupRef.current = null;
+        currentVideo.removeEventListener("loadeddata", handleCurrentReady);
+        // Defer ready state by one frame so the GIF fallback gets at least one render cycle.
+        // This prevents React state batching from skipping the GIF overlay entirely.
+        requestAnimationFrame(() => {
+          activateVideo();
+        });
+      };
+
       readyCleanupRef.current = () => {
         currentVideo.removeEventListener("loadeddata", handleCurrentReady);
       };
 
       if (currentVideo.readyState >= 2) {
-        handleCurrentReady();
+        // Defer even for cached videos: HEVC codec may still be initializing the first frame,
+        // and the GIF needs at least one render cycle to display.
+        requestAnimationFrame(() => {
+          handleCurrentReady();
+        });
       } else {
         currentVideo.addEventListener("loadeddata", handleCurrentReady, { once: true });
       }
