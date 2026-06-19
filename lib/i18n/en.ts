@@ -20,6 +20,7 @@ export const en: Record<TranslationKey, string> = {
   "lab.emptyDesc": "Type any Chinese character or word in the search box. The system will automatically break down the pinyin and play the corresponding tongue position videos.",
   "lab.relatedClips": "Related Clips",
   "lab.loading": "Loading...",
+  "lab.singleCharacterNotice": "Multi-character input currently plays only the first character: {char}",
 
   "clips.title": "Clip Library",
   "clips.subtitle": "Filter teaching clips by pinyin",

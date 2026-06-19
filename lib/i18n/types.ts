@@ -23,6 +23,7 @@ export type TranslationKey =
   | "lab.emptyDesc"
   | "lab.relatedClips"
   | "lab.loading"
+  | "lab.singleCharacterNotice"
 
   // Clips page
   | "clips.title"

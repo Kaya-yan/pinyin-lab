@@ -17,6 +17,7 @@ import clipsData from "@/data/clips.json";
 import SearchIcon from "@/components/SearchIcon";
 import { useI18n, type TranslationKey } from "@/lib/i18n";
 import { useInView } from "@/lib/useInView";
+import { derivePlaybackWord } from "@/lib/lab-playback";
 
 function EmptyState({ t }: { t: (key: TranslationKey) => string }) {
   const { ref, inView } = useInView(0.2);
@@ -46,17 +47,23 @@ function LabContent() {
   const [relatedClips, setRelatedClips] = useState<Clip[]>([]);
   const [previewClip, setPreviewClip] = useState<Clip | null>(null);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResultType | null>(null);
+  const [playbackWord, setPlaybackWord] = useState("");
+  const [downgradedToSingleCharacter, setDowngradedToSingleCharacter] = useState(false);
   const videoSectionRef = useRef<HTMLElement | null>(null);
 
   const handleSearch = useCallback((word: string) => {
-    if (!word.trim()) {
+    const playbackInfo = derivePlaybackWord(word);
+    setPlaybackWord(playbackInfo.playbackWord);
+    setDowngradedToSingleCharacter(playbackInfo.downgraded);
+
+    if (!playbackInfo.playbackWord) {
       setSegments([]);
       setRelatedClips([]);
       setEvaluationResult(null);
       return;
     }
 
-    const result = parseWord(word.trim());
+    const result = parseWord(playbackInfo.playbackWord);
     setSegments(result);
     setActiveIndex(0);
     setEvaluationResult(null);
@@ -107,7 +114,6 @@ function LabContent() {
       <Navbar />
 
       <main id="main-content" className="max-w-[960px] mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* 搜索区 */}
         <section className="mb-6 sm:mb-8 bg-surface border border-border rounded-lg p-5 sm:p-6">
           <h1 className="sr-only">{t("lab.title")}</h1>
           <form onSubmit={handleSubmit} className="flex gap-3 justify-center">
@@ -129,7 +135,14 @@ function LabContent() {
           </form>
         </section>
 
-        {/* 拼音拆解条 */}
+        {downgradedToSingleCharacter && playbackWord && (
+          <section className="mb-4 border border-border rounded-lg bg-surface px-4 py-3">
+            <p className="text-sm text-text-muted">
+              {t("lab.singleCharacterNotice", { char: playbackWord })}
+            </p>
+          </section>
+        )}
+
         {segments.length > 0 && (
           <section className="mb-6 sm:mb-8 bg-surface border border-border rounded-lg py-4 sm:py-6 px-4">
             <PinyinStrip
@@ -142,7 +155,6 @@ function LabContent() {
           </section>
         )}
 
-        {/* 视频播放器 */}
         {segments.length > 0 && (
           <section ref={videoSectionRef} className="mb-8 sm:mb-10">
             <VideoPlayer
@@ -153,7 +165,6 @@ function LabContent() {
           </section>
         )}
 
-        {/* 发音评测区 */}
         {segments.length > 0 && (
           <section className="mb-8 sm:mb-10">
             {evaluationResult ? (
@@ -171,12 +182,8 @@ function LabContent() {
           </section>
         )}
 
-        {/* 空状态 */}
-        {segments.length === 0 && (
-          <EmptyState t={t} />
-        )}
+        {segments.length === 0 && <EmptyState t={t} />}
 
-        {/* 关联片段推荐 */}
         {relatedClips.length > 0 && (
           <section>
             <h2 className="text-lg font-serif font-semibold text-text mb-4">
@@ -195,7 +202,6 @@ function LabContent() {
         )}
       </main>
 
-      {/* B站预览弹窗 */}
       {previewClip && (
         <BilibiliModal
           clip={previewClip}

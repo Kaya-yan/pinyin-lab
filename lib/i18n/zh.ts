@@ -20,6 +20,7 @@ export const zh: Record<TranslationKey, string> = {
   "lab.emptyDesc": "在搜索框中输入任意汉字或词语，系统将自动拆解拼音并播放对应的舌位视频",
   "lab.relatedClips": "相关配音片段",
   "lab.loading": "加载中...",
+  "lab.singleCharacterNotice": "当前多字词先只演示首字发音：{char}",
 
   "clips.title": "片段库",
   "clips.subtitle": "按拼音筛选配音教学片段",

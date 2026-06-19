@@ -20,6 +20,7 @@ export const id: Record<TranslationKey, string> = {
   "lab.emptyDesc": "Ketik karakter atau kata Tionghoa di kotak pencarian. Sistem akan secara otomatis memecah pinyin dan memainkan video posisi lidah yang sesuai.",
   "lab.relatedClips": "Klip Terkait",
   "lab.loading": "Memuat...",
+  "lab.singleCharacterNotice": "Input multi-karakter saat ini hanya menampilkan pengucapan karakter pertama: {char}",
 
   "clips.title": "Perpustakaan Klip",
   "clips.subtitle": "Filter klip pengajaran berdasarkan pinyin",
