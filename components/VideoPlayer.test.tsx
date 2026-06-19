@@ -49,13 +49,13 @@ const segment: PinyinSegment = {
   final: "i",
   tone: 4,
   initialVideo: "/videos/initials/sh.mov",
-  initialGif: null,
+  initialGif: "/gif/initials/sh.gif",
   finalVideo: "/videos/finals/i.mp4",
   subs: [
     {
       label: "声母 sh",
       video: "/videos/initials/sh.mov",
-      gif: null,
+      gif: "/gif/initials/sh.gif",
       phase: "initial",
       durationMs: 1010,
     },
@@ -74,12 +74,12 @@ describe("VideoPlayer handoff timing", () => {
     vi.restoreAllMocks();
   });
 
-  test("keeps the current video layer hidden until the first frame is ready", async () => {
+  test("shows the initial fallback GIF until the current video has a renderable frame", async () => {
     const playSpy = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
     vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
     vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
 
-    const { container } = render(
+    const { container, getByAltText } = render(
       <LanguageProvider>
         <VideoPlayer segments={[segment]} activeIndex={0} onIndexChange={() => {}} />
       </LanguageProvider>
@@ -92,7 +92,8 @@ describe("VideoPlayer handoff timing", () => {
     expect(layers).toHaveLength(2);
 
     expect(playSpy).not.toHaveBeenCalled();
-    expect(layers[0]).toHaveStyle({ opacity: "0" });
+    expect(layers[0]).toHaveStyle({ opacity: "1" });
+    expect(getByAltText("shì 声母 sh 舌位视频")).toBeInTheDocument();
 
     Object.defineProperty(videos[0], "readyState", {
       configurable: true,
@@ -154,6 +155,70 @@ describe("VideoPlayer handoff timing", () => {
     await waitFor(() => {
       expect((videos[1].play as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
       expect(layers[1]).toHaveStyle({ opacity: "1" });
+    });
+  });
+
+  test("waits for a minimum visible duration before handing off a very short initial", async () => {
+    const shortSegment: PinyinSegment = {
+      char: "特",
+      pinyin: "tè",
+      initial: "t",
+      final: "e",
+      tone: 4,
+      initialVideo: "/videos/initials/t.mov",
+      initialGif: "/gif/initials/t.gif",
+      finalVideo: "/videos/finals/e.mp4",
+      subs: [
+        {
+          label: "声母 t",
+          video: "/videos/initials/t.mov",
+          gif: "/gif/initials/t.gif",
+          phase: "initial",
+          durationMs: 300,
+          blendMs: 120,
+        },
+        {
+          label: "韵母 e",
+          video: "/videos/finals/e.mp4",
+          gif: null,
+          phase: "final",
+          durationMs: 2000,
+        },
+      ],
+    };
+
+    const { container } = render(
+      <LanguageProvider>
+        <VideoPlayer segments={[shortSegment]} activeIndex={0} onIndexChange={() => {}} />
+      </LanguageProvider>
+    );
+
+    const videos = Array.from(container.querySelectorAll("video"));
+    const initialState: MutableVideoState = {
+      currentTime: 0.19,
+      duration: 0.3,
+      readyState: 4,
+      paused: false,
+    };
+    const finalState: MutableVideoState = {
+      currentTime: 0,
+      duration: 2,
+      readyState: 4,
+      paused: true,
+    };
+
+    installVideoState(videos[0], initialState);
+    installVideoState(videos[1], finalState);
+    fireEvent(videos[0], new Event("loadeddata"));
+    fireEvent.timeUpdate(videos[0]);
+
+    expect((videos[1].play as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+
+    initialState.currentTime = 0.26;
+    fireEvent.timeUpdate(videos[0]);
+
+    await waitFor(() => {
+      expect((videos[1].play as unknown as ReturnType<typeof vi.fn>)).toHaveBeenCalled();
     });
   });
 });

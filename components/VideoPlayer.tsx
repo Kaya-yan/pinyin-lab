@@ -43,6 +43,7 @@ interface SegmentTimeline {
 }
 
 const DEFAULT_SUB_DURATION_MS = 2000;
+const DEFAULT_INITIAL_VISIBLE_MS = 250;
 const DEFAULT_HANDOFF_CONFIG: HandoffConfig = {
   leadInMs: 120,
   tailOutMs: 160,
@@ -60,12 +61,13 @@ function getNextLayer(layer: Layer): Layer {
   return layer === "A" ? "B" : "A";
 }
 
-function getPlayableSrc(sub: SubSegment): { src: string | null; isGif: boolean; isVideo: boolean } {
+function getPlayableSrc(sub: SubSegment): { src: string | null; isGif: boolean; isVideo: boolean; fallbackGif: string | null } {
   const src = sub.video || sub.gif || null;
   return {
     src,
     isGif: !sub.video && !!sub.gif,
     isVideo: !!sub.video,
+    fallbackGif: sub.video ? sub.gif || null : null,
   };
 }
 
@@ -133,6 +135,8 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
   const [layerBSrc, setLayerBSrc] = useState<string | null>(null);
   const [layerAIsGif, setLayerAIsGif] = useState(false);
   const [layerBIsGif, setLayerBIsGif] = useState(false);
+  const [layerAFallbackGif, setLayerAFallbackGif] = useState<string | null>(null);
+  const [layerBFallbackGif, setLayerBFallbackGif] = useState<string | null>(null);
   const [layerAReady, setLayerAReady] = useState(false);
   const [layerBReady, setLayerBReady] = useState(false);
   const [flatIdx, setFlatIdx] = useState(0);
@@ -177,8 +181,17 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     setLayerBReady(ready);
   }
 
-  function setLayerSource(layer: Layer, src: string | null, isGif: boolean) {
+  function setLayerFallbackGif(layer: Layer, fallbackGif: string | null) {
+    if (layer === "A") {
+      setLayerAFallbackGif(fallbackGif);
+      return;
+    }
+    setLayerBFallbackGif(fallbackGif);
+  }
+
+  function setLayerSource(layer: Layer, src: string | null, isGif: boolean, fallbackGif: string | null = null) {
     setLayerReady(layer, Boolean(src) && isGif);
+    setLayerFallbackGif(layer, isGif ? null : fallbackGif);
     if (layer === "A") {
       setLayerASrc(src);
       setLayerAIsGif(isGif);
@@ -246,6 +259,11 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     };
   }
 
+  function getMinimumVisibleDurationMs(sub: SubSegment) {
+    if (sub.phase !== "initial") return 0;
+    return sub.minVisibleMs ?? DEFAULT_INITIAL_VISIBLE_MS;
+  }
+
   function computeProgressForCurrent(flatSub: FlatSub, elapsedWallMs: number) {
     const timeline = getSegmentTimeline(flatSub.segIdx);
     if (!timeline) {
@@ -293,7 +311,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
     const nextLayer = getNextLayer(currentLayerRef.current);
     pendingHandoffRef.current = { toFlatIdx: nextIdx, toLayer: nextLayer };
-    setLayerSource(nextLayer, source.src, source.isGif);
+    setLayerSource(nextLayer, source.src, source.isGif, source.fallbackGif);
 
     const activateLayer = () => {
       setActiveLayer(nextLayer);
@@ -347,7 +365,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
     const nextLayer = getNextLayer(currentLayerRef.current);
     pendingHandoffRef.current = { toFlatIdx: nextIdx, toLayer: nextLayer };
-    setLayerSource(nextLayer, source.src, source.isGif);
+    setLayerSource(nextLayer, source.src, source.isGif, source.fallbackGif);
 
     if (source.isVideo) {
       const nextVideo = getVideoRef(nextLayer);
@@ -410,7 +428,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     if (playable.isGif) {
       pauseAllVideos();
       if (!adoptingPending) {
-        setLayerSource(layer, playable.src, true);
+        setLayerSource(layer, playable.src, true, playable.fallbackGif);
       }
       setActiveLayer(layer);
       setIsPlaying(true);
@@ -424,12 +442,13 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
       if (handoffTarget && handoffConfig?.transitionMode === "crossfade") {
         const overlapMs = getConfigWallDurationMs(handoffConfig.blendMs, isSlow);
+        const minimumVisibleMs = getMinimumVisibleDurationMs(current.sub);
         handoffStartTimerRef.current = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
             handoffTriggeredRef.current = true;
             startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs, handoffConfig);
           }
-        }, Math.max(durationMs - overlapMs, 0));
+        }, Math.max(durationMs - overlapMs, minimumVisibleMs));
       }
 
       gifTimerRef.current = setTimeout(() => {
@@ -467,7 +486,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     if (!currentVideo) return;
 
     if (!adoptingPending) {
-      setLayerSource(layer, playable.src, false);
+      setLayerSource(layer, playable.src, false, playable.fallbackGif);
       setActiveLayer(layer);
       currentVideo.pause();
       currentVideo.src = playable.src;
@@ -523,6 +542,9 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
       if (!handoffTarget || !handoffConfig || handoffTriggeredRef.current) return;
       if (handoffConfig.transitionMode !== "crossfade") return;
+
+      const minimumVisibleMs = getMinimumVisibleDurationMs(current.sub);
+      if (elapsedWallMs < minimumVisibleMs) return;
 
       const overlapMs = getConfigWallDurationMs(handoffConfig.blendMs, isSlow);
       const remainingWallMs = ((currentVideo.duration - currentVideo.currentTime) * 1000) / currentVideo.playbackRate;
@@ -606,12 +628,13 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
       if (handoffTarget && handoffConfig?.transitionMode === "crossfade") {
         const overlapMs = getConfigWallDurationMs(handoffConfig.blendMs, isSlow);
+        const minimumVisibleMs = getMinimumVisibleDurationMs(current.sub);
         handoffStartTimerRef.current = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
             handoffTriggeredRef.current = true;
             startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs, handoffConfig);
           }
-        }, Math.max(durationMs - overlapMs, 0));
+        }, Math.max(durationMs - overlapMs, minimumVisibleMs));
       }
 
       gifTimerRef.current = setTimeout(() => {
@@ -798,7 +821,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
             <>
               <div
                 className="absolute inset-0 transition-opacity"
-                style={{ opacity: activeLayer === "A" && layerAReady ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
+                style={{ opacity: activeLayer === "A" && (layerAReady || Boolean(layerAFallbackGif)) ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
               >
                 {layerAIsGif ? (
                   layerASrc && (
@@ -812,20 +835,32 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
                     />
                   )
                 ) : (
-                  <video
-                    ref={videoARef}
-                    className="w-full h-full object-contain"
-                    playsInline
-                    preload="auto"
-                    muted
-                    aria-label={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
-                  />
+                  <>
+                    <video
+                      ref={videoARef}
+                      className="w-full h-full object-contain"
+                      playsInline
+                      preload="auto"
+                      muted
+                      aria-label={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
+                    />
+                    {layerAFallbackGif && !layerAReady && (
+                      <Image
+                        src={layerAFallbackGif}
+                        alt={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
+                        fill
+                        unoptimized
+                        sizes="(min-width: 800px) 800px, 100vw"
+                        className="object-contain"
+                      />
+                    )}
+                  </>
                 )}
               </div>
 
               <div
                 className="absolute inset-0 transition-opacity"
-                style={{ opacity: activeLayer === "B" && layerBReady ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
+                style={{ opacity: activeLayer === "B" && (layerBReady || Boolean(layerBFallbackGif)) ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
               >
                 {layerBIsGif ? (
                   layerBSrc && (
@@ -839,14 +874,26 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
                     />
                   )
                 ) : (
-                  <video
-                    ref={videoBRef}
-                    className="w-full h-full object-contain"
-                    playsInline
-                    preload="auto"
-                    muted
-                    aria-label={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
-                  />
+                  <>
+                    <video
+                      ref={videoBRef}
+                      className="w-full h-full object-contain"
+                      playsInline
+                      preload="auto"
+                      muted
+                      aria-label={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
+                    />
+                    {layerBFallbackGif && !layerBReady && (
+                      <Image
+                        src={layerBFallbackGif}
+                        alt={`${current.pinyin} ${translateSubLabel(current.sub.label, t)} ${t("player.tongueVideo")}`}
+                        fill
+                        unoptimized
+                        sizes="(min-width: 800px) 800px, 100vw"
+                        className="object-contain"
+                      />
+                    )}
+                  </>
                 )}
               </div>
             </>

@@ -13,6 +13,7 @@ export interface SubSegment {
   leadInMs?: number;
   tailOutMs?: number;
   blendMs?: number;
+  minVisibleMs?: number;
   transitionMode?: TransitionMode;
 }
 
@@ -38,6 +39,7 @@ interface PinyinMapEntry {
   leadInMs?: number;
   tailOutMs?: number;
   blendMs?: number;
+  minVisibleMs?: number;
   transitionMode?: TransitionMode;
 }
 
@@ -101,6 +103,7 @@ function createSubSegment(label: string, phase: SubPhase, entry: PinyinMapEntry)
     leadInMs: entry.leadInMs,
     tailOutMs: entry.tailOutMs,
     blendMs: entry.blendMs,
+    minVisibleMs: entry.minVisibleMs,
     transitionMode: entry.transitionMode,
   };
 }
