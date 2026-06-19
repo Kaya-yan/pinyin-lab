@@ -133,6 +133,8 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
   const [layerBSrc, setLayerBSrc] = useState<string | null>(null);
   const [layerAIsGif, setLayerAIsGif] = useState(false);
   const [layerBIsGif, setLayerBIsGif] = useState(false);
+  const [layerAReady, setLayerAReady] = useState(false);
+  const [layerBReady, setLayerBReady] = useState(false);
   const [flatIdx, setFlatIdx] = useState(0);
 
   const flatSubs = useMemo<FlatSub[]>(() => {
@@ -167,7 +169,16 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     return layer === "A" ? videoARef.current : videoBRef.current;
   }
 
+  function setLayerReady(layer: Layer, ready: boolean) {
+    if (layer === "A") {
+      setLayerAReady(ready);
+      return;
+    }
+    setLayerBReady(ready);
+  }
+
   function setLayerSource(layer: Layer, src: string | null, isGif: boolean) {
+    setLayerReady(layer, Boolean(src) && isGif);
     if (layer === "A") {
       setLayerASrc(src);
       setLayerAIsGif(isGif);
@@ -304,6 +315,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
       const handleReady = () => {
         readyCleanupRef.current = null;
         nextVideo.removeEventListener("loadeddata", handleReady);
+        setLayerReady(nextLayer, true);
         nextVideo.currentTime = getMediaSeekSeconds(config.leadInMs, isSlow);
         const playPromise = nextVideo.play();
         if (playPromise) playPromise.catch(() => {});
@@ -462,11 +474,28 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
       currentVideo.playbackRate = isSlow ? SLOW_PLAYBACK_RATE : 1;
       currentVideo.loop = false;
       currentVideo.load();
-      applyQueuedSeek(currentVideo);
-      const playPromise = currentVideo.play();
-      if (playPromise) playPromise.catch(() => {});
-      setIsPlaying(true);
+
+      const handleCurrentReady = () => {
+        readyCleanupRef.current = null;
+        currentVideo.removeEventListener("loadeddata", handleCurrentReady);
+        setLayerReady(layer, true);
+        applyQueuedSeek(currentVideo);
+        const playPromise = currentVideo.play();
+        if (playPromise) playPromise.catch(() => {});
+        setIsPlaying(true);
+      };
+
+      readyCleanupRef.current = () => {
+        currentVideo.removeEventListener("loadeddata", handleCurrentReady);
+      };
+
+      if (currentVideo.readyState >= 2) {
+        handleCurrentReady();
+      } else {
+        currentVideo.addEventListener("loadeddata", handleCurrentReady, { once: true });
+      }
     } else {
+      setLayerReady(layer, true);
       setActiveLayer(layer);
       currentVideo.playbackRate = isSlow ? SLOW_PLAYBACK_RATE : 1;
       currentVideo.loop = false;
@@ -763,13 +792,13 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <div className="w-full max-w-[800px] rounded-lg border border-border overflow-hidden bg-black">
+      <div className="w-full max-w-[800px] rounded-lg border border-border overflow-hidden bg-background">
         <div className="relative w-full aspect-video">
           {hasSrc ? (
             <>
               <div
                 className="absolute inset-0 transition-opacity"
-                style={{ opacity: activeLayer === "A" ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
+                style={{ opacity: activeLayer === "A" && layerAReady ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
               >
                 {layerAIsGif ? (
                   layerASrc && (
@@ -796,7 +825,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
               <div
                 className="absolute inset-0 transition-opacity"
-                style={{ opacity: activeLayer === "B" ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
+                style={{ opacity: activeLayer === "B" && layerBReady ? 1 : 0, transitionDuration: `${CROSSFADE_MS}ms` }}
               >
                 {layerBIsGif ? (
                   layerBSrc && (

@@ -74,6 +74,39 @@ describe("VideoPlayer handoff timing", () => {
     vi.restoreAllMocks();
   });
 
+  test("keeps the current video layer hidden until the first frame is ready", async () => {
+    const playSpy = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, "load").mockImplementation(() => {});
+
+    const { container } = render(
+      <LanguageProvider>
+        <VideoPlayer segments={[segment]} activeIndex={0} onIndexChange={() => {}} />
+      </LanguageProvider>
+    );
+
+    const videos = Array.from(container.querySelectorAll("video"));
+    expect(videos).toHaveLength(2);
+
+    const layers = Array.from(container.querySelectorAll(".absolute.inset-0"));
+    expect(layers).toHaveLength(2);
+
+    expect(playSpy).not.toHaveBeenCalled();
+    expect(layers[0]).toHaveStyle({ opacity: "0" });
+
+    Object.defineProperty(videos[0], "readyState", {
+      configurable: true,
+      get: () => 4,
+    });
+
+    fireEvent(videos[0], new Event("loadeddata"));
+
+    await waitFor(() => {
+      expect(playSpy).toHaveBeenCalled();
+      expect(layers[0]).toHaveStyle({ opacity: "1" });
+    });
+  });
+
   test("keeps the initial layer visible until the next video has a renderable frame", async () => {
     const { container } = render(
       <LanguageProvider>
@@ -102,6 +135,12 @@ describe("VideoPlayer handoff timing", () => {
 
     const layers = Array.from(container.querySelectorAll(".absolute.inset-0"));
     expect(layers).toHaveLength(2);
+
+    fireEvent(videos[0], new Event("loadeddata"));
+
+    await waitFor(() => {
+      expect(layers[0]).toHaveStyle({ opacity: "1" });
+    });
 
     fireEvent.timeUpdate(videos[0]);
 
