@@ -121,6 +121,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
   const handoffTriggeredRef = useRef(false);
   const pendingHandoffRef = useRef<PendingHandoff | null>(null);
   const queuedSeekRef = useRef<{ flatIdx: number; wallMs: number } | null>(null);
+  const readyCleanupRef = useRef<(() => void) | null>(null);
   const currentLayerRef = useRef<Layer>("A");
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -192,6 +193,10 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     if (handoffAdvanceTimerRef.current) {
       clearTimeout(handoffAdvanceTimerRef.current);
       handoffAdvanceTimerRef.current = null;
+    }
+    if (readyCleanupRef.current) {
+      readyCleanupRef.current();
+      readyCleanupRef.current = null;
     }
   }
 
@@ -271,7 +276,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
   }
 
-  function startCrossfadeHandoff(next: FlatSub, nextIdx: number, remainingWallMs: number) {
+  function startCrossfadeHandoff(next: FlatSub, nextIdx: number, remainingWallMs: number, config: HandoffConfig) {
     const source = getPlayableSrc(next.sub);
     if (!source.src) return;
 
@@ -279,23 +284,46 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     pendingHandoffRef.current = { toFlatIdx: nextIdx, toLayer: nextLayer };
     setLayerSource(nextLayer, source.src, source.isGif);
 
+    const activateLayer = () => {
+      setActiveLayer(nextLayer);
+      handoffAdvanceTimerRef.current = setTimeout(() => {
+        setFlatIdx(nextIdx);
+      }, Math.max(remainingWallMs, 0));
+    };
+
     if (source.isVideo) {
       const nextVideo = getVideoRef(nextLayer);
-      if (nextVideo) {
-        nextVideo.pause();
-        nextVideo.src = source.src;
-        nextVideo.playbackRate = isSlow ? SLOW_PLAYBACK_RATE : 1;
-        nextVideo.loop = false;
-        nextVideo.load();
+      if (!nextVideo) return;
+
+      nextVideo.pause();
+      nextVideo.src = source.src;
+      nextVideo.playbackRate = isSlow ? SLOW_PLAYBACK_RATE : 1;
+      nextVideo.loop = false;
+      nextVideo.load();
+
+      const handleReady = () => {
+        readyCleanupRef.current = null;
+        nextVideo.removeEventListener("loadeddata", handleReady);
+        nextVideo.currentTime = getMediaSeekSeconds(config.leadInMs, isSlow);
         const playPromise = nextVideo.play();
         if (playPromise) playPromise.catch(() => {});
+        activateLayer();
+      };
+
+      readyCleanupRef.current = () => {
+        nextVideo.removeEventListener("loadeddata", handleReady);
+      };
+
+      if (nextVideo.readyState >= 2) {
+        handleReady();
+        return;
       }
+
+      nextVideo.addEventListener("loadeddata", handleReady, { once: true });
+      return;
     }
 
-    setActiveLayer(nextLayer);
-    handoffAdvanceTimerRef.current = setTimeout(() => {
-      setFlatIdx(nextIdx);
-    }, Math.max(remainingWallMs, 0));
+    activateLayer();
   }
 
   function switchImmediatelyToNext(next: FlatSub, nextIdx: number) {
@@ -387,7 +415,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
         handoffStartTimerRef.current = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
             handoffTriggeredRef.current = true;
-            startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs);
+            startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs, handoffConfig);
           }
         }, Math.max(durationMs - overlapMs, 0));
       }
@@ -471,7 +499,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
       const remainingWallMs = ((currentVideo.duration - currentVideo.currentTime) * 1000) / currentVideo.playbackRate;
       if (remainingWallMs <= overlapMs) {
         handoffTriggeredRef.current = true;
-        startCrossfadeHandoff(handoffTarget, flatIdx + 1, remainingWallMs);
+        startCrossfadeHandoff(handoffTarget, flatIdx + 1, remainingWallMs, handoffConfig);
       }
     };
 
@@ -552,7 +580,7 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
         handoffStartTimerRef.current = setTimeout(() => {
           if (!handoffTriggeredRef.current) {
             handoffTriggeredRef.current = true;
-            startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs);
+            startCrossfadeHandoff(handoffTarget, flatIdx + 1, overlapMs, handoffConfig);
           }
         }, Math.max(durationMs - overlapMs, 0));
       }
