@@ -1,0 +1,301 @@
+{
+  "initials": [
+    {
+      "pinyin": "b",
+      "file": "initial_b_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "c",
+      "file": "initial_c_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "ch",
+      "file": "initial_ch_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "d",
+      "file": "initial_d_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "e_vowel",
+      "file": "initial_e_vowel_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "er_vowel",
+      "file": "initial_er_vowel_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "f",
+      "file": "initial_f_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "g",
+      "file": "initial_g_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "h",
+      "file": "initial_h_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "i_vowel",
+      "file": "initial_i_vowel_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "j",
+      "file": "initial_j_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "k",
+      "file": "initial_k_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "n",
+      "file": "initial_n_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "n2",
+      "file": "initial_n2_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "p",
+      "file": "initial_p_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "q",
+      "file": "initial_q_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "r",
+      "file": "initial_r_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "s",
+      "file": "initial_s_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "sh",
+      "file": "initial_sh_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "t",
+      "file": "initial_t_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "x",
+      "file": "initial_x_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "z",
+      "file": "initial_z_end.jpg",
+      "type": "initial"
+    },
+    {
+      "pinyin": "zh",
+      "file": "initial_zh_end.jpg",
+      "type": "initial"
+    }
+  ],
+  "finals": [
+    {
+      "pinyin": "a",
+      "file": "final_a_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ai",
+      "file": "final_ai_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "an",
+      "file": "final_an_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ang",
+      "file": "final_ang_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ao",
+      "file": "final_ao_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "e",
+      "file": "final_e_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ei",
+      "file": "final_ei_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "en",
+      "file": "final_en_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "eng",
+      "file": "final_eng_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "er",
+      "file": "final_er_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "i",
+      "file": "final_i_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ia",
+      "file": "final_ia_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ian",
+      "file": "final_ian_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "iang",
+      "file": "final_iang_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "iao",
+      "file": "final_iao_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ie",
+      "file": "final_ie_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "in",
+      "file": "final_in_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ing",
+      "file": "final_ing_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "iong",
+      "file": "final_iong_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "iou",
+      "file": "final_iou_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "o",
+      "file": "final_o_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ong",
+      "file": "final_ong_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ou",
+      "file": "final_ou_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "u",
+      "file": "final_u_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ü",
+      "file": "final_ü_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ua",
+      "file": "final_ua_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "uai",
+      "file": "final_uai_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "uan",
+      "file": "final_uan_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "üan",
+      "file": "final_üan_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "uang",
+      "file": "final_uang_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "üe",
+      "file": "final_üe_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ueng",
+      "file": "final_ueng_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ui",
+      "file": "final_ui_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "un",
+      "file": "final_un_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "ün",
+      "file": "final_ün_start.jpg",
+      "type": "final"
+    },
+    {
+      "pinyin": "uo",
+      "file": "final_uo_start.jpg",
+      "type": "final"
+    }
+  ]
+}

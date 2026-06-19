@@ -9,11 +9,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primary: "#2C5282",
+        secondary: "#4A5568",
+        background: "#FAFAF8",
+        surface: "#FFFFFF",
+        text: "#1A202C",
+        "text-muted": "#718096",
+        accent: "#B7791F",
+        border: "#E2E8F0",
+        highlight: "#EBF4FF",
+      },
+      fontFamily: {
+        serif: ['"Songti SC"', '"STSong"', '"Noto Serif SC"', "Georgia", "serif"],
+        sans: ['"PingFang SC"', '"Microsoft YaHei"', '"Noto Sans SC"', "sans-serif"],
+      },
+      borderRadius: {
+        sm: "4px",
+        md: "8px",
+        lg: "12px",
       },
     },
   },
   plugins: [],
 };
+
 export default config;
