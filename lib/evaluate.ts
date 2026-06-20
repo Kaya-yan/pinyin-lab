@@ -118,10 +118,10 @@ export function evaluatePronunciation(
 
     const targetInitial = target?.initial || '';
     const targetFinal = target?.final || '';
-    const targetTone = target?.tone || 1;
+    const targetTone = target?.tone ?? 1;
     const recognizedInitial = recognized?.initial || '';
     const recognizedFinal = recognized?.final || '';
-    const recognizedTone = recognized?.tone || 1;
+    const recognizedTone = recognized?.tone ?? 1;
 
     const initialScore = calculateMatchScore(
       targetInitial, recognizedInitial, config.confusionPairs, SCORE_CONFUSION,

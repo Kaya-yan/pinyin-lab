@@ -703,11 +703,8 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
     if (activeIndex < segments.length - 1) onIndexChange(activeIndex + 1);
   };
 
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const seekToRatio = (ratio: number) => {
     if (!current) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = clamp((e.clientX - rect.left) / rect.width, 0, 1);
     const timeline = getSegmentTimeline(current.segIdx);
 
     if (!timeline || current.sub.phase === "standalone") {
@@ -753,6 +750,22 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
       currentVideo.currentTime = getMediaSeekSeconds(seekWallMs, isSlow);
       setProgress(computeProgressForCurrent(current, seekWallMs));
     }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = clamp((e.clientX - rect.left) / rect.width, 0, 1);
+    seekToRatio(ratio);
+  };
+
+  const handleTouchAction = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!current) return;
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = clamp((touch.clientX - rect.left) / rect.width, 0, 1);
+    seekToRatio(ratio);
   };
 
   const handleProgressKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -994,8 +1007,11 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
 
         <div className="flex-1 mx-1 sm:mx-2">
           <div
-            className="relative h-1 bg-border rounded-full cursor-pointer group"
+            className="relative h-6 bg-transparent cursor-pointer group flex items-center"
             onClick={handleProgressClick}
+            onTouchStart={handleTouchAction}
+            onTouchMove={handleTouchAction}
+            onTouchEnd={handleTouchAction}
             onKeyDown={handleProgressKeyDown}
             role="slider"
             aria-label={t("player.progress")}
@@ -1004,8 +1020,9 @@ export default function VideoPlayer({ segments, activeIndex, onIndexChange }: Vi
             aria-valuemax={100}
             tabIndex={0}
           >
+            <div className="absolute left-0 right-0 h-1 bg-border rounded-full" />
             <div
-              className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-100"
+              className="absolute left-0 h-1 bg-primary rounded-full transition-all duration-100"
               style={{ width: `${progress}%` }}
             />
             {segments.map((_, i) => {

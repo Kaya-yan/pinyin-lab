@@ -119,6 +119,7 @@ export type TranslationKey =
   | "eval.maxTimeHint"
   | "eval.recognizedAs"
   | "eval.listenCorrect"
+  | "eval.ttsUnavailable"
   | "eval.disclaimer"
   | "eval.stars"
   | "eval.star1"

@@ -97,6 +97,8 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const hasResultRef = useRef(false);
   const isRecordingRef = useRef(false);
+  const cleanedUpIdsRef = useRef<Set<number>>(new Set());
+  const instanceIdRef = useRef(0);
 
   useEffect(() => {
     isRecordingRef.current = isRecording;
@@ -104,6 +106,7 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
 
   const cleanup = useCallback(() => {
     if (recognitionRef.current) {
+      cleanedUpIdsRef.current.add(instanceIdRef.current);
       recognitionRef.current.abort();
       recognitionRef.current = null;
     }
@@ -121,7 +124,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
       return;
     }
 
-    const recognition = new SpeechRecognition();
+    let recognition: SpeechRecognitionInstance;
+    try {
+      recognition = new SpeechRecognition();
+    } catch {
+      setError({ code: 'NOT_SUPPORTED', message: '' });
+      return;
+    }
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'zh-CN';
@@ -161,8 +170,13 @@ export function useSpeechRecognition(): UseSpeechRecognitionReturn {
       setIsProcessing(false);
     };
 
+    const currentInstanceId = ++instanceIdRef.current;
     recognition.onend = () => {
       setIsRecording(false);
+      if (cleanedUpIdsRef.current.has(currentInstanceId)) {
+        cleanedUpIdsRef.current.delete(currentInstanceId);
+        return;
+      }
       if (!hasResultRef.current) {
         setError({ code: 'NO_SPEECH', message: '' });
       }

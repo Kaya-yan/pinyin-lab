@@ -108,6 +108,7 @@ export const id: Record<TranslationKey, string> = {
   "eval.maxTimeHint": "Izinkan akses mikrofon",
   "eval.recognizedAs": "Dikenali sebagai",
   "eval.listenCorrect": "Dengarkan pengucapan yang benar",
+  "eval.ttsUnavailable": "Browser di perangkat ini belum mendukung pembacaan suara Mandarin. Periksa paket suara sistem atau coba browser lain.",
   "eval.disclaimer": "Hasil evaluasi disimpulkan oleh pengenalan suara AI dan hanya untuk referensi. Silakan nilai dengan video posisi lidah.",
   "eval.stars": "Penilaian",
   "eval.star1": "Terus coba",

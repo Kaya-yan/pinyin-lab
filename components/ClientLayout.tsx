@@ -1,7 +1,7 @@
 "use client";
 
 import { LanguageProvider, useI18n } from "@/lib/i18n";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 function SkipLink() {
   const { t } = useI18n();
@@ -17,9 +17,9 @@ function SkipLink() {
 
 function LangUpdater() {
   const { locale } = useI18n();
-  if (typeof document !== "undefined") {
+  useEffect(() => {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : locale;
-  }
+  }, [locale]);
   return null;
 }
 

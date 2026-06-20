@@ -108,6 +108,7 @@ export const zh: Record<TranslationKey, string> = {
   "eval.maxTimeHint": "请允许浏览器使用麦克风",
   "eval.recognizedAs": "识别为",
   "eval.listenCorrect": "听正确发音",
+  "eval.ttsUnavailable": "当前设备浏览器暂不支持中文朗读，请检查系统语音包或更换浏览器",
   "eval.disclaimer": "评测结果由 AI 语音识别推断，仅供参考，请结合舌位视频自行判断",
   "eval.stars": "评分",
   "eval.star1": "继续加油",

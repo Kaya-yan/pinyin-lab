@@ -79,10 +79,12 @@ function FeedbackItem({ item, t }: { item: SyllableFeedback; t: (key: Translatio
   return <span>{message}</span>;
 }
 
-function SyllableCard({ syllable, t, onListen }: {
+function SyllableCard({ syllable, t, onListen, listenErrorText, showListenError }: {
   syllable: SyllableResult;
   t: (key: TranslationKey) => string;
   onListen?: (text: string) => void;
+  listenErrorText?: string;
+  showListenError?: boolean;
 }) {
   return (
     <div className={`flex flex-col items-center p-4 rounded-lg border transition-colors duration-200 ${
@@ -102,14 +104,21 @@ function SyllableCard({ syllable, t, onListen }: {
       <span className="text-2xl font-bold text-text mb-1">{syllable.char}</span>
       <span className="text-sm text-text-muted mb-2">{syllable.pinyin}</span>
       {onListen && (
-        <button
-          onClick={() => onListen(syllable.char)}
-          className="mb-2 flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-          aria-label={`${t("eval.listenCorrect")}：${syllable.pinyin}`}
-        >
-          <SpeakerIcon />
-          {t("eval.listenCorrect")}
-        </button>
+        <div className="mb-2 flex flex-col items-center gap-1">
+          <button
+            onClick={() => onListen(syllable.char)}
+            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+            aria-label={`${t("eval.listenCorrect")}：${syllable.pinyin}`}
+          >
+            <SpeakerIcon />
+            {t("eval.listenCorrect")}
+          </button>
+          {showListenError && listenErrorText && (
+            <p className="max-w-[180px] text-center text-xs text-text-muted leading-relaxed">
+              {listenErrorText}
+            </p>
+          )}
+        </div>
       )}
       <div className="w-full space-y-2">
         <ScoreRow label={t("eval.initial")} score={syllable.initialScore} />
@@ -146,15 +155,16 @@ export default function EvaluationResult({
   const totalCount = result.syllableResults.length;
   const errorFeedbacks = result.syllableResults.filter((s) => !s.isCorrect && s.feedback);
   const firstError = result.syllableResults.find((s) => !s.isCorrect);
+  const fullWord = result.syllableResults.map((s) => s.char).join("");
+  const ttsHint = t("eval.ttsUnavailable");
 
   const handleListenWord = useCallback((text: string) => {
-    tts.speak(text);
+    void tts.speak(text);
   }, [tts]);
 
   const handleListenAll = useCallback(() => {
-    const word = result.syllableResults.map(s => s.char).join("");
-    tts.speak(word);
-  }, [tts, result.syllableResults]);
+    void tts.speak(fullWord);
+  }, [tts, fullWord]);
 
   const getScoreLabel = () => {
     if (result.totalScore >= 90) return t("eval.excellent");
@@ -200,9 +210,9 @@ export default function EvaluationResult({
 
       {result.syllableResults.length > 0 && (
         <div className="mb-5">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-start justify-between mb-3 gap-3">
             <h4 className="text-sm font-medium text-text">{t("eval.syllableAnalysis")}</h4>
-            {tts.isSupported && (
+            <div className="flex flex-col items-end gap-1">
               <button
                 onClick={handleListenAll}
                 className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
@@ -211,7 +221,12 @@ export default function EvaluationResult({
                 <SpeakerIcon />
                 {t("eval.listenCorrect")}
               </button>
-            )}
+              {tts.lastError && tts.lastAttemptedText === fullWord && (
+                <p className="max-w-[220px] text-right text-xs text-text-muted leading-relaxed">
+                  {ttsHint}
+                </p>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {result.syllableResults.map((syllable, index) => (
@@ -219,7 +234,9 @@ export default function EvaluationResult({
                 key={index}
                 syllable={syllable}
                 t={t}
-                onListen={tts.isSupported ? handleListenWord : undefined}
+                onListen={handleListenWord}
+                listenErrorText={ttsHint}
+                showListenError={Boolean(tts.lastError && tts.lastAttemptedText === syllable.char)}
               />
             ))}
           </div>

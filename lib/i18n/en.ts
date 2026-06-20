@@ -108,6 +108,7 @@ export const en: Record<TranslationKey, string> = {
   "eval.maxTimeHint": "Please allow microphone access",
   "eval.recognizedAs": "Recognized as",
   "eval.listenCorrect": "Listen to correct pronunciation",
+  "eval.ttsUnavailable": "Chinese speech playback is not available in this browser on your device. Please check the system voice pack or try another browser.",
   "eval.disclaimer": "Evaluation results are inferred by AI speech recognition and are for reference only. Please judge with the tongue position video.",
   "eval.stars": "Rating",
   "eval.star1": "Keep trying",

@@ -55,11 +55,16 @@ export default function PinyinStrip({
 }: PinyinStripProps) {
   const { t } = useI18n();
   const tts = useTTS();
+  const showTtsHint = Boolean(
+    tts.lastError &&
+    tts.lastAttemptedText &&
+    segments.some((segment) => segment.char === tts.lastAttemptedText)
+  );
 
   const handleSyllableClick = useCallback((index: number, seg: PinyinSegment, syllable?: SyllableResult) => {
     onSelect(index);
     if (syllable && onSyllableClick) onSyllableClick(syllable);
-    if (tts.isSupported) tts.speak(seg.char);
+    void tts.speak(seg.char);
   }, [onSelect, onSyllableClick, tts]);
 
   if (segments.length === 0) return null;
@@ -134,6 +139,12 @@ export default function PinyinStrip({
             {t("eval.needsImprovement")} {incorrectCount}
           </span>
         </div>
+      )}
+
+      {showTtsHint && (
+        <p className="max-w-md text-center text-xs text-text-muted leading-relaxed">
+          {t("eval.ttsUnavailable")}
+        </p>
       )}
     </div>
   );

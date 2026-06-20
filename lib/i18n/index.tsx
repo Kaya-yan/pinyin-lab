@@ -22,15 +22,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("zh");
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (stored && translations[stored]) {
-      setLocaleState(stored);
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY) as Locale | null;
+      if (stored && translations[stored]) {
+        setLocaleState(stored);
+      }
+    } catch {
+      // localStorage unavailable (privacy mode, third-party storage blocked)
     }
   }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale);
-    localStorage.setItem(STORAGE_KEY, newLocale);
+    try {
+      localStorage.setItem(STORAGE_KEY, newLocale);
+    } catch {
+      // localStorage unavailable
+    }
     document.documentElement.lang = newLocale === "zh" ? "zh-CN" : newLocale;
   }, []);
 
@@ -39,7 +47,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       let text = translations[locale][key] || translations.zh[key] || key;
       if (params) {
         for (const [k, v] of Object.entries(params)) {
-          text = text.replace(`{${k}}`, v);
+          text = text.replaceAll(`{${k}}`, v);
         }
       }
       return text;

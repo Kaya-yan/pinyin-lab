@@ -9,6 +9,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pinyinlab.app"),
   title: {
     default: "PinyinLab - 汉语动态舌位可视化教学平台",
     template: "%s | PinyinLab",
@@ -33,6 +34,13 @@ export const metadata: Metadata = {
     title: "PinyinLab - 汉语动态舌位可视化教学平台",
     description:
       "面向海外低龄汉语学习者的纯前端发音辅助工具，用可视化舌位视频替代平面口型示范。",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "PinyinLab" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PinyinLab - 汉语动态舌位可视化教学平台",
+    description: "面向海外低龄汉语学习者的纯前端发音辅助工具，用可视化舌位视频替代平面口型示范。",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,

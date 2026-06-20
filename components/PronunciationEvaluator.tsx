@@ -101,14 +101,7 @@ export default function PronunciationEvaluator({
 
   const state = deriveState(evaluationResult, error, isProcessing, isRecording);
   const errorMessage = error ? t(ERROR_I18N_KEYS[error.code]) : "";
-
-  if (!isSupported) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-5 text-center" role="alert">
-        <p className="text-yellow-800 text-sm font-medium">{t("eval.errorNotSupported")}</p>
-      </div>
-    );
-  }
+  const showTtsHint = Boolean(tts.lastError && tts.lastAttemptedText === targetWord);
 
   return (
     <div className="bg-surface border border-border rounded-lg p-5 sm:p-6">
@@ -116,22 +109,33 @@ export default function PronunciationEvaluator({
         <h3 className="text-lg font-serif font-semibold text-text mb-1">{t("eval.title")}</h3>
         <div className="flex items-center justify-center gap-2">
           <p className="text-sm text-text-muted">{t("eval.targetWord")}：<span className="font-medium text-text">{targetWord}</span></p>
-          {tts.isSupported && (
+          <div className="flex flex-col items-start gap-1">
             <button
-              onClick={() => tts.speak(targetWord)}
+              onClick={() => void tts.speak(targetWord)}
               className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
               aria-label={`${t("eval.listenCorrect")}：${targetWord}`}
             >
               <SpeakerIcon />
               {t("eval.listenCorrect")}
             </button>
-          )}
+            {showTtsHint && (
+              <p className="max-w-[220px] text-left text-xs text-text-muted leading-relaxed">
+                {t("eval.ttsUnavailable")}
+              </p>
+            )}
+          </div>
         </div>
         <p className="text-xs text-text-muted mt-1">{t("eval.instruction")}</p>
       </div>
 
       <div className="flex flex-col items-center gap-4">
-        {state === "idle" && (
+        {!isSupported && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center" role="alert">
+            <p className="text-yellow-800 text-sm">{t("eval.errorNotSupported")}</p>
+          </div>
+        )}
+
+        {isSupported && state === "idle" && (
           <button
             onClick={handleStartRecording}
             className="w-48 h-12 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all duration-200 flex items-center justify-center gap-2"
@@ -145,7 +149,7 @@ export default function PronunciationEvaluator({
           </button>
         )}
 
-        {state === "recording" && (
+        {isSupported && state === "recording" && (
           <div className="flex flex-col items-center gap-3" aria-live="polite">
             <button
               onClick={stopRecording}
@@ -163,7 +167,7 @@ export default function PronunciationEvaluator({
           </div>
         )}
 
-        {state === "processing" && (
+        {isSupported && state === "processing" && (
           <div className="w-48 h-12 bg-gray-200 text-gray-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2" aria-live="polite">
             <svg className="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -173,7 +177,7 @@ export default function PronunciationEvaluator({
           </div>
         )}
 
-        {state === "error" && error && (
+        {isSupported && state === "error" && error && (
           <div className="flex flex-col items-center gap-3" role="alert">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md text-center">
               <p className="text-yellow-800 text-sm">{errorMessage}</p>
@@ -187,7 +191,7 @@ export default function PronunciationEvaluator({
           </div>
         )}
 
-        {state === "completed" && evaluationResult && (
+        {isSupported && state === "completed" && evaluationResult && (
           <div className="w-full">
             <div className="text-center mb-4" aria-live="polite" role="status">
               <p className="text-3xl font-bold text-primary mb-1">
